@@ -10,6 +10,11 @@ For OPSec, you may want to provide your own binaries.  The binaries provided may
 
 <br>
 
+4/07/2020
+<br>
+Added some more Sharpview functions to "Find-LocalAdminAccess" as well as fed in more of OutFlank's process enumeration "Ps-Tools"
+<br>
+
 3/29/2020
 Added some Drop Down Mimikatz Functionalities, thanks to rvrsh3ll for help with variables.
 <br>
@@ -24,8 +29,6 @@ Other very helpful contributors include N173Hawk and Yeti-Sec.
 TODO <br>
 <br>
 Make functionality for both .net 3.5 and 4.0
-<br>
-Obfuscate code with Obfuscar
 <br>
 Re-Arrange files and functions to be more workflow driven
 
@@ -76,3 +79,4 @@ These Tools are not C#, but need to be incorporated into toolset<br>
 https://github.com/outflanknl/Spray-AD<br>
 https://github.com/outflanknl/Recon-AD<br>
 https://github.com/0x09AL/RdpThief<br>
+https://github.com/outflanknl/Ps-Tools<br>
